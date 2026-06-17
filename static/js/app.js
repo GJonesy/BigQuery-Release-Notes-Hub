@@ -1,5 +1,6 @@
 // Global State
 let allNotes = [];
+let filteredNotes = [];
 let activeFilter = 'all';
 let searchQuery = '';
 
@@ -137,6 +138,12 @@ function setupEventListeners() {
     // Modal action buttons
     copyTweetBtn.addEventListener('click', copyTweetToClipboard);
     submitTweetBtn.addEventListener('click', postTweetToTwitter);
+
+    // Export CSV Button
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportToCSV);
+    }
 }
 
 // Fetch release notes (using cache initially)
@@ -293,6 +300,7 @@ function applyFiltersAndSearch() {
         });
     }
     
+    filteredNotes = filtered;
     renderCards(filtered);
 }
 
@@ -360,12 +368,21 @@ function renderCards(notes) {
                     </svg>
                     <span>Release Doc</span>
                 </a>
-                <button class="btn btn-tweet-action" onclick="openTweetComposer('${escapeHtml(note.date)}', '${escapeHtml(note.type)}', '${escapeHtml(note.content_text)}', '${escapeHtml(note.link)}')">
-                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                    <span>Tweet</span>
-                </button>
+                <div class="action-buttons-group" style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-copy-card" style="padding: 0.5rem 0.8rem; font-size: 0.8rem;" onclick="copyCardToClipboard(this, '${escapeHtml(note.date)}', '${escapeHtml(note.type)}', '${escapeHtml(note.content_text)}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                    <button class="btn btn-tweet-action" style="padding: 0.5rem 0.8rem; font-size: 0.8rem;" onclick="openTweetComposer('${escapeHtml(note.date)}', '${escapeHtml(note.type)}', '${escapeHtml(note.content_text)}', '${escapeHtml(note.link)}')">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                        <span>Tweet</span>
+                    </button>
+                </div>
             </div>
         `;
         
@@ -508,4 +525,69 @@ function showToast(message) {
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
+}
+
+// Copy individual card text to clipboard
+async function copyCardToClipboard(btn, date, type, text) {
+    const cleanText = text.replace(/\\n/g, '\n');
+    const fullMessage = `📢 BigQuery Release Note [${date}] (${type}):\n${cleanText}`;
+    
+    try {
+        await navigator.clipboard.writeText(fullMessage);
+        
+        // Visual feedback on the button
+        const span = btn.querySelector('span');
+        const originalText = span.textContent;
+        span.textContent = 'Copied!';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
+        
+        showToast('Card copied to clipboard!');
+        
+        setTimeout(() => {
+            span.textContent = originalText;
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-secondary');
+        }, 2000);
+    } catch (err) {
+        console.error('Copy failed:', err);
+        showToast('Failed to copy to clipboard.');
+    }
+}
+
+// Export current filtered list to CSV
+function exportToCSV() {
+    if (!filteredNotes || filteredNotes.length === 0) {
+        showToast('No notes to export.');
+        return;
+    }
+    
+    // CSV Header
+    const headers = ["Date", "Type", "Content (HTML)", "Content (Text)", "Link"];
+    
+    // Map rows
+    const rows = filteredNotes.map(note => [
+        note.date,
+        note.type,
+        note.content_html,
+        note.content_text,
+        note.link
+    ]);
+    
+    // Convert to CSV string (escape double quotes by doubling them)
+    const csvContent = [
+        headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+        ...rows.map(row => row.map(cell => `"${(cell || '').replace(/"/g, '""').replace(/\r?\n/g, '\n')}"`).join(','))
+    ].join('\n');
+    
+    // Download trigger
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bigquery_release_notes_${activeFilter}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('CSV Exported successfully!');
 }
