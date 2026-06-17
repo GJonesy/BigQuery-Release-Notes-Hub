@@ -44,6 +44,9 @@ const themeToggleBtn = document.getElementById('theme-toggle-btn');
 const themeSunIcon = document.getElementById('theme-sun-icon');
 const themeMoonIcon = document.getElementById('theme-moon-icon');
 
+// Scroll to Top Element
+const scrollTopBtn = document.getElementById('scroll-top-btn');
+
 // Twitter Progress Ring Setup
 let circumference = 0;
 if (progressRingBar) {
@@ -154,6 +157,20 @@ function setupEventListeners() {
     // Theme Toggle Button
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', toggleTheme);
+    }
+
+    // Scroll to Top Events
+    if (scrollTopBtn) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollTopBtn.classList.add('show');
+            } else {
+                scrollTopBtn.classList.remove('show');
+            }
+        });
+        scrollTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
     }
 }
 
@@ -313,6 +330,10 @@ function applyFiltersAndSearch() {
     
     filteredNotes = filtered;
     renderCards(filtered);
+
+    // Dynamic Page Title
+    const filterText = activeFilter === 'all' ? 'All Updates' : activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1);
+    document.title = `BigQuery Release Notes Hub - ${filterText}`;
 }
 
 // Render release note cards to grid
@@ -363,7 +384,7 @@ function renderCards(notes) {
                             <line x1="8" y1="2" x2="8" y2="6"/>
                             <line x1="3" y1="10" x2="21" y2="10"/>
                         </svg>
-                        ${note.date}
+                        ${note.date}${getRelativeDateString(note.timestamp)}
                     </span>
                 </div>
                 <div class="card-body">
@@ -483,20 +504,24 @@ function updateTweetCharCount() {
     
     // Colors & button state
     const countGroup = document.querySelector('.char-count-group');
+    const textareaWrapper = document.querySelector('.tweet-textarea-wrapper');
     if (count > 280) {
         countGroup.classList.remove('warning');
         countGroup.classList.add('danger');
         progressRingBar.style.stroke = '#ef4444'; // Red
         submitTweetBtn.disabled = true;
+        textareaWrapper.classList.add('limit-exceeded');
     } else if (count > 250) {
         countGroup.classList.remove('danger');
         countGroup.classList.add('warning');
         progressRingBar.style.stroke = '#f59e0b'; // Yellow
         submitTweetBtn.disabled = false;
+        textareaWrapper.classList.remove('limit-exceeded');
     } else {
         countGroup.classList.remove('danger', 'warning');
         progressRingBar.style.stroke = '#38bdf8'; // Blue
         submitTweetBtn.disabled = false;
+        textareaWrapper.classList.remove('limit-exceeded');
     }
 }
 
@@ -626,4 +651,31 @@ function updateThemeUI(theme) {
         themeSunIcon.classList.remove('hidden');
         themeMoonIcon.classList.add('hidden');
     }
+}
+
+// Calculate relative date tags (e.g. Yesterday, 2 days ago)
+function getRelativeDateString(timestamp) {
+    if (!timestamp) return '';
+    
+    try {
+        const noteDate = new Date(timestamp);
+        const nowDate = new Date();
+        
+        // Zero out times for date-only comparison
+        noteDate.setHours(0, 0, 0, 0);
+        const compareDate = new Date(nowDate);
+        compareDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = compareDate - noteDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return ' <span class="relative-tag" style="opacity: 0.6; font-size: 0.8em; font-weight: normal; margin-left: 0.35rem;">(Today)</span>';
+        if (diffDays === 1) return ' <span class="relative-tag" style="opacity: 0.6; font-size: 0.8em; font-weight: normal; margin-left: 0.35rem;">(Yesterday)</span>';
+        if (diffDays > 1 && diffDays <= 30) {
+            return ` <span class="relative-tag" style="opacity: 0.6; font-size: 0.8em; font-weight: normal; margin-left: 0.35rem;">(${diffDays} days ago)</span>`;
+        }
+    } catch (e) {
+        console.error('Relative date formatting error:', e);
+    }
+    return '';
 }
