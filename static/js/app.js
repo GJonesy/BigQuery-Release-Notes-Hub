@@ -39,6 +39,11 @@ const copyBtnText = document.getElementById('copy-btn-text');
 const submitTweetBtn = document.getElementById('submit-tweet-btn');
 const toast = document.getElementById('toast');
 
+// Theme Toggle Elements
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const themeSunIcon = document.getElementById('theme-sun-icon');
+const themeMoonIcon = document.getElementById('theme-moon-icon');
+
 // Twitter Progress Ring Setup
 let circumference = 0;
 if (progressRingBar) {
@@ -50,6 +55,7 @@ if (progressRingBar) {
 
 // Initialize application
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     fetchNotes();
     setupEventListeners();
 });
@@ -143,6 +149,11 @@ function setupEventListeners() {
     const exportCsvBtn = document.getElementById('export-csv-btn');
     if (exportCsvBtn) {
         exportCsvBtn.addEventListener('click', exportToCSV);
+    }
+
+    // Theme Toggle Button
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', toggleTheme);
     }
 }
 
@@ -590,4 +601,29 @@ function exportToCSV() {
     link.click();
     document.body.removeChild(link);
     showToast('CSV Exported successfully!');
+}
+
+// Theme Toggle Logic
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeUI(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeUI(newTheme);
+}
+
+function updateThemeUI(theme) {
+    if (theme === 'light') {
+        themeSunIcon.classList.add('hidden');
+        themeMoonIcon.classList.remove('hidden');
+    } else {
+        themeSunIcon.classList.remove('hidden');
+        themeMoonIcon.classList.add('hidden');
+    }
 }

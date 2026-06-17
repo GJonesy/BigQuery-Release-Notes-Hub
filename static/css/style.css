@@ -42,6 +42,37 @@
     --transition-fast: 0.15s ease;
     --transition-normal: 0.25s ease;
     --transition-slow: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+    --bg-header: rgba(10, 14, 23, 0.75);
+    --bg-overlay: rgba(10, 14, 23, 0.8);
+}
+
+/* Light theme overrides */
+:root[data-theme="light"] {
+    --bg-dark-900: #f8fafc;
+    --bg-dark-800: #ffffff;
+    --bg-dark-700: #e2e8f0;
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-hover: rgba(14, 165, 233, 0.4);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    
+    --color-primary: #0284c7;
+    --color-primary-hover: #0369a1;
+    --color-primary-glow: rgba(2, 132, 199, 0.15);
+    
+    --bg-general: rgba(100, 116, 139, 0.08);
+    --border-general: rgba(100, 116, 139, 0.2);
+    
+    --bg-header: rgba(248, 250, 252, 0.8);
+    --bg-overlay: rgba(15, 23, 42, 0.4);
+}
+
+:root[data-theme="light"] .glow-sphere {
+    opacity: 0.08;
 }
 
 * {
@@ -116,7 +147,7 @@ body {
 
 /* Header */
 .app-header {
-    background: rgba(10, 14, 23, 0.75);
+    background: var(--bg-header);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border-color);
@@ -596,6 +627,14 @@ body {
     font-family: var(--font-sans);
 }
 
+.btn-icon-only {
+    padding: 0.6rem;
+    border-radius: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex-shrink: 0;
+}
+
 .btn-icon {
     width: 1.1rem;
     height: 1.1rem;
@@ -708,7 +747,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(10, 14, 23, 0.8);
+    background: var(--bg-overlay);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 1000;
